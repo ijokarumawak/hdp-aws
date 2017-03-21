@@ -3,7 +3,11 @@ import subprocess
 import getopt
 import json
 
-serviceAmis = {'0.hdp': 'ami-9f3c64ff', '1.hdp': 'ami-783a6218', '2.hdp': 'ami-043b6364'}
+serviceAmis = {
+        '0.hdp': 'ami-a7d880c7',
+        '1.hdp': 'ami-7dda821d',
+        '2.hdp': 'ami-40d98120'
+    }
 amiServices = {v: k for k, v in serviceAmis.items()}
 
 region = 'us-west-1'
@@ -28,6 +32,9 @@ def queryServices():
                 services[amiServices[instance['ImageId']]] = ins
 
     return services;
+
+def printServices():
+    print json.dumps(queryServices(), ensure_ascii=False)
 
 def updateRoute53():
     services = queryServices()
@@ -67,23 +74,24 @@ def generatePrivateHosts():
         print toHosts(k, v)
 
 def main():
+    commands = {
+            'query-services': printServices,
+            'update-route53': updateRoute53,
+            'generate-public-hosts': generatePublicHosts,
+            'generate-private-hosts': generatePrivateHosts
+        }
+
     opts, args = getopt.getopt(sys.argv[1:], 'h', ['help'])
     if len(args) != 1:
-        print 'A command is required.'
+        print 'A command is required. {}'.format(commands.keys())
         sys.exit(1)
 
     cmd = args[0]
-    if cmd == 'query-services':
-        print json.dumps(queryServices(), ensure_ascii=False)
-    elif cmd == 'update-route53':
-        updateRoute53()
-    elif cmd == 'generate-public-hosts':
-        generatePublicHosts()
-    elif cmd == 'generate-private-hosts':
-        generatePrivateHosts()
-    else:
+    if cmd not in commands:
         print 'Command {} was not defined.'.format(cmd)
         sys.exit(1)
+
+    commands[cmd]()
 
 if __name__ == "__main__":
     main()
