@@ -5,6 +5,9 @@ import json
 from os import listdir
 from os.path import isfile, join
 import re
+import urllib2
+import base64
+from datetime import datetime
 
 region = 'us-west-1'
 
@@ -45,6 +48,34 @@ def queryServices():
 
 def printServices():
     print json.dumps(queryServices(), ensure_ascii=False)
+
+def createAmi(serviceName):
+    services = queryServices()
+    service = services[serviceName]
+    if not service:
+        print '%s was not found.' % serviceName
+        return
+
+    # Get cluster version using Ambari API
+    m = re.search('\d+\.(.+)', serviceName)
+    if not m:
+        print '%s was not a valid serviceName.' % serviceName
+        return
+
+    r = urllib2.Request('http://0.%s.aws.mine:8080/api/v1/clusters' % m.group(1))
+    authHeader = base64.b64encode('admin:admin')
+    r.add_header('Authorization', 'Basic %s' % authHeader)
+    clusters = json.load(urllib2.urlopen(r))
+
+    instanceId = service['InstanceId']
+    name = '%s-%s-%s' % (clusters['items'][0]['Clusters']['version'], serviceName, datetime.now().strftime('%Y%m%d%H'))
+
+    p = subprocess.Popen(['aws', '--region', region, 'ec2', 'create-image',
+            '--instance-id', instanceId, '--name', name],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = p.communicate()
+    print out, err
+
 
 def updateRoute53():
     services = queryServices()
@@ -88,11 +119,12 @@ def main():
             'query-services': printServices,
             'update-route53': updateRoute53,
             'generate-public-hosts': generatePublicHosts,
-            'generate-private-hosts': generatePrivateHosts
+            'generate-private-hosts': generatePrivateHosts,
+            'create-ami': createAmi
         }
 
     opts, args = getopt.getopt(sys.argv[1:], 'h', ['help'])
-    if len(args) != 1:
+    if len(args) == 0:
         print 'A command is required. {}'.format(commands.keys())
         sys.exit(1)
 
@@ -101,7 +133,13 @@ def main():
         print 'Command {} was not defined.'.format(cmd)
         sys.exit(1)
 
-    commands[cmd]()
+    command = commands[cmd]
+    arglen = command.__code__.co_argcount
+
+    if arglen == 0:
+        command()
+    else:
+        command(args[1])
 
 if __name__ == "__main__":
     main()
