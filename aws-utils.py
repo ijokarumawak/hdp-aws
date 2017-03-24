@@ -2,16 +2,26 @@ import sys
 import subprocess
 import getopt
 import json
-
-serviceAmis = {
-        '0.hdp': 'ami-a7d880c7',
-        '1.hdp': 'ami-7dda821d',
-        '2.hdp': 'ami-40d98120'
-    }
-amiServices = {v: k for k, v in serviceAmis.items()}
+from os import listdir
+from os.path import isfile, join
+import re
 
 region = 'us-west-1'
 
+def loadServiceSpecs():
+    specDir = 'spot-fleet-specifications'
+    specFiles = [f for f in listdir(specDir) if isfile(join(specDir, f))]
+    specs = {}
+    for s in specFiles:
+        m = re.search('(.+)\.json', s)
+        if m:
+            with open(join(specDir, s)) as f:
+                specs[m.group(1)] = json.load(f)
+    return specs
+
+services = loadServiceSpecs()
+
+amiServices = {v['LaunchSpecifications'][0]['ImageId']: k for k, v in services.items()}
 
 def get(d, k):
     return d[k] if k in d else 'N/A'
