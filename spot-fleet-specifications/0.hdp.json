@@ -4,7 +4,7 @@
   "IamFleetRole": "arn:aws:iam::874973089831:role/aws-ec2-spot-fleet-role",
   "LaunchSpecifications": [
     {
-      "ImageId": "ami-fa247f9a",
+      "ImageId": "ami-b68ca9d6",
       "KeyName": "aws-koji-private-hwx-ncf",
       "SecurityGroups": [ { "GroupId": "sg-890a94ee" } ],
       "InstanceType": "i3.large",
