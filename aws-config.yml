@@ -1,0 +1,10 @@
+account: "your-account"
+region: "region-to-use"
+keyName: "keyName-to-use"
+
+securityGroups:
+  HDF: "security-group-id"
+  HDP: "security-group-id"
+
+route53:
+  hostedZoneId: "hosted-zone-id"

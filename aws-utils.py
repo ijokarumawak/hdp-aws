@@ -8,8 +8,13 @@ import re
 import urllib2
 import base64
 from datetime import datetime
+import yaml
+from jinja2 import Template
 
-region = 'us-west-1'
+confStream = open('aws-config.yml', 'r')
+conf = yaml.load(confStream)
+
+region = conf['region']
 
 def loadServiceSpecs():
     specDir = 'spot-fleet-specifications'
@@ -76,6 +81,42 @@ def createAmi(serviceName):
     out, err = p.communicate()
     print out, err
 
+def queryUnusedSnapshots():
+    p = subprocess.Popen(['aws', '--region', region, 'ec2', 'describe-snapshots', '--owner-ids', conf['account']],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = p.communicate()
+    snapshots = json.loads(out)['Snapshots']
+
+    p = subprocess.Popen(['aws', '--region', region, 'ec2', 'describe-images', '--owners', conf['account']],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = p.communicate()
+    images = json.loads(out)['Images']
+
+    snapshotToImage = {x['BlockDeviceMappings'][0]['Ebs']['SnapshotId']: x for x in images}
+
+    return [x for x in snapshots if x['SnapshotId'] not in snapshotToImage]
+
+
+def listUnusedSnapshots():
+    snapshots = queryUnusedSnapshots()
+    volumeSize = 0
+    for snapshot in snapshots:
+        volumeSize += snapshot['VolumeSize']
+        print json.dumps(snapshot, ensure_ascii=False)
+
+    if volumeSize > 0:
+        print 'Total volume size: {} GiB'.format(volumeSize)
+
+def deleteUnusedSnapshots():
+    snapshots = queryUnusedSnapshots()
+    for snapshot in snapshots:
+        print json.dumps(snapshot, ensure_ascii=False)
+        p = subprocess.Popen(['aws', '--region', region, 'ec2', 'delete-snapshot', '--snapshot-id', snapshot['SnapshotId']],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        print out, err
+
+
 
 def updateRoute53():
     services = queryServices()
@@ -120,7 +161,9 @@ def main():
             'update-route53': updateRoute53,
             'generate-public-hosts': generatePublicHosts,
             'generate-private-hosts': generatePrivateHosts,
-            'create-ami': createAmi
+            'create-ami': createAmi,
+            'list-unused-snapshots': listUnusedSnapshots,
+            'delete-unused-snapshots': deleteUnusedSnapshots
         }
 
     opts, args = getopt.getopt(sys.argv[1:], 'h', ['help'])
