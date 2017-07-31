@@ -92,7 +92,11 @@ def queryUnusedSnapshots():
     out, err = p.communicate()
     images = json.loads(out)['Images']
 
-    snapshotToImage = {x['BlockDeviceMappings'][0]['Ebs']['SnapshotId']: x for x in images}
+    snapshotToImage = {}
+    for image in images:
+        snapshotIds = [x['Ebs']['SnapshotId'] for x in image['BlockDeviceMappings'] if 'Ebs' in x]
+        for snapshotId in snapshotIds:
+            snapshotToImage[snapshotId] = image
 
     return [x for x in snapshots if x['SnapshotId'] not in snapshotToImage]
 
