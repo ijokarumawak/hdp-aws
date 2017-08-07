@@ -1,0 +1,16 @@
+{
+    "schemaVersion": "1.0",
+    "description": "Sample configuration to join an instance to a domain",
+    "runtimeConfig": {
+        "aws:domainJoin": {
+            "properties": {
+                "directoryId": "d-956721b4a5",
+                "directoryName": "aws.mine",
+                "dnsIpAddresses": [
+                    "172.31.6.156",
+                    "172.31.24.118"
+                ]
+            }
+        }
+    }
+}
