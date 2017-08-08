@@ -32,7 +32,7 @@
     - Specify Admin and its password into the dialog
     - You should see 'Welcome to the aws.mine domain.' message
     - Click 'Restart Now'
-    - TODO: Restart will take XX minutes, wait patiently
+    - Restart may take more than 5 minutes, wait patiently
 10. Once the instance gets ready, login from RDP as "aws.mine\Admin"
 
 See AWS docs for detail.
@@ -42,4 +42,16 @@ http://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-join-aws-domain.html
 To use a Spot Instance with AD, the instance needs to be added manually.
 http://docs.aws.amazon.com/directoryservice/latest/admin-guide/join_windows_instance.html
 
+## How to add user
 
+You need dsa.msc first.
+https://www.peppercrew.nl/index.php/2012/07/good-old-dsa-msc-on-windows-server-2012/
+
+```
+# Open PowerShell and execute following commands:
+Import-Module ServerManager 
+Add-WindowsFeature RSAT-AD-PowerShell,RSAT-AD-Tools
+```
+
+Then follow AWS docs.
+http://docs.aws.amazon.com/directoryservice/latest/admin-guide/creating_ad_users_and_groups.html
