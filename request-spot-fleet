@@ -10,6 +10,8 @@ then
   exit 1
 fi
 
+region=`grep region aws-config-tokyo.yml |awk '{print $2}'`
+
 aws ec2 request-spot-fleet \
-  --region us-west-1 \
+  --region $region \
   --spot-fleet-request-config file://spot-fleet-specifications/${service_name}.json 
