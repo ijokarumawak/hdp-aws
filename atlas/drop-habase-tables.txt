@@ -1,0 +1,6 @@
+disable 'ATLAS_ENTITY_AUDIT_EVENTS'
+drop 'ATLAS_ENTITY_AUDIT_EVENTS'
+disable 'atlas_titan'
+drop 'atlas_titan'
+exit
+
